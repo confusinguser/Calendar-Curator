@@ -31,12 +31,12 @@ impl Event {
         for (i, line) in event_str.lines().enumerate() {
             if line.starts_with("DTSTART") {
                 event.start = Some(
-                    parse_datetime(&line.replace("DTSTART", "").trim())
+                    parse_datetime(line.replace("DTSTART", "").trim())
                         .map_err(|e| e.with_line(i + 1))?,
                 );
             } else if line.starts_with("DTEND") {
                 event.end = Some(
-                    parse_datetime(&line.replace("DTEND", "").trim())
+                    parse_datetime(line.replace("DTEND", "").trim())
                         .map_err(|e| e.with_line(i + 1))?,
                 );
             } else if line.starts_with("UID:") {

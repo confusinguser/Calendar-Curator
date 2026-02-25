@@ -69,7 +69,7 @@ impl Db {
             match File::create(&self_clone.path).await {
                 Ok(mut file) => {
                     let data = serde_json::to_string(&self_clone.calendars)?;
-                    file.write(data.as_bytes()).await?;
+                    file.write_all(data.as_bytes()).await?;
                     file.flush().await?;
                 }
                 Err(e) => {
@@ -96,10 +96,7 @@ impl Db {
 
     pub async fn get_calendar(&mut self, id: &str) -> Option<Calendar> {
         let calendars = self.calendars.get(id);
-        let Some(mut calendar) = calendars.cloned() else {
-            return None;
-        };
-
+        let mut calendar = calendars.cloned()?;
         // Update last accessed time
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -114,11 +111,11 @@ impl Db {
         // Check if we have cached events that are not expired
         let mut event_cache = EVENT_CACHE.lock().await;
         let cache = event_cache.get_mut(id);
-        if let Some(cached) = cache {
-            if !cached.is_expired() {
-                calendar.ical.events = cached.events.clone();
-                return Some(calendar);
-            }
+        if let Some(cached) = cache
+            && !cached.is_expired()
+        {
+            calendar.ical.events = cached.events.clone();
+            return Some(calendar);
         }
 
         // Cache is expired or doesn't exist, fetch fresh events
@@ -160,12 +157,12 @@ impl Db {
     }
 
     pub async fn update_rule(&mut self, calendar_id: &str, rule_id: &str, rule: Rule) -> bool {
-        if let Some(calendar) = self.calendars.get_mut(calendar_id) {
-            if let Some(existing_rule) = calendar.rules.iter_mut().find(|rule| rule.id == rule_id) {
-                *existing_rule = rule;
-                self.save_data_bg().await;
-                return true;
-            }
+        if let Some(calendar) = self.calendars.get_mut(calendar_id)
+            && let Some(existing_rule) = calendar.rules.iter_mut().find(|rule| rule.id == rule_id)
+        {
+            *existing_rule = rule;
+            self.save_data_bg().await;
+            return true;
         }
         false
     }
