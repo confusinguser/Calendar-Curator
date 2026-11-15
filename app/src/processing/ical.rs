@@ -1,11 +1,11 @@
 use crate::error::SyntaxError;
 use crate::processing::event::Event;
 use serde::{Deserialize, Serialize};
-use std::error::Error;
+use std::{error::Error, fmt};
 use utoipa::ToSchema;
 
 /// This is a representation of an iCalendar object from an iCal file. There is also [Calendar] which is the calendar object used internally when processing
-#[derive(Debug, Clone, ToSchema, Serialize, Deserialize)]
+#[derive(Debug, Clone, ToSchema, Serialize, Deserialize, Default)]
 pub struct ICalendar {
     pub(crate) name: String,
     pub(crate) description: String,
@@ -17,21 +17,42 @@ pub struct ICalendar {
     pub events: Vec<Event>,
 }
 
-impl Default for ICalendar {
-    fn default() -> ICalendar {
-        ICalendar {
-            name: String::new(),
-            description: String::new(),
-            method: String::new(),
-            version: String::new(),
-            prodid: String::new(),
-            calscale: String::new(),
-            published_ttl: String::new(),
-            events: Vec::new(),
+impl fmt::Display for ICalendar {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "BEGIN:VCALENDAR\n")?;
+        writeln!(f, "X-WR-CALNAME:{}\n", self.name)?;
+        writeln!(f, "X-WR-CALDESC:{}\n", self.description)?;
+        writeln!(f, "METHOD:{}\n", self.method)?;
+        writeln!(f, "VERSION:{}\n", self.version)?;
+        writeln!(f, "PRODID:{}\n", self.prodid)?;
+        writeln!(f, "CALSCALE:{}\n", self.calscale)?;
+        writeln!(f, "X-PUBLISHED-TTL:{}\n", self.published_ttl)?;
+        writeln!(f, "NAME:{}\n", self.name)?;
+
+        for event in &self.events {
+            writeln!(f, "BEGIN:VEVENT\n")?;
+            if let Some(start) = &event.start {
+                writeln!(f, "DTSTART{}\n", start.to_ical_str())?;
+            }
+            if let Some(end) = &event.end {
+                writeln!(f, "DTEND{}\n", end.to_ical_str())?;
+            }
+            writeln!(f, "UID:{}\n", event.uid)?;
+            writeln!(f, "DTSTAMP:{}\n", event.timestamp)?;
+            writeln!(f, "LAST-MODIFIED:{}\n", event.last_modified)?;
+            writeln!(f, "SUMMARY:{}\n", event.summary)?;
+            writeln!(f, "LOCATION:{}\n", event.location)?;
+            writeln!(
+                f,
+                "DESCRIPTION:{}\n",
+                event.description.replace("\n", "\\n")
+            )?;
+            writeln!(f, "END:VEVENT\n")?;
         }
+
+        writeln!(f, "END:VCALENDAR\n")
     }
 }
-
 impl ICalendar {
     pub fn from_string(calendar_str: &str) -> Result<ICalendar, Box<dyn Error>> {
         let mut calendar = ICalendar::default();
@@ -112,41 +133,5 @@ impl ICalendar {
             }
         }
         Ok(calendar)
-    }
-
-    pub fn to_string(&self) -> String {
-        let mut calendar_str = String::new();
-        calendar_str.push_str("BEGIN:VCALENDAR\n");
-        calendar_str.push_str(&format!("X-WR-CALNAME:{}\n", self.name));
-        calendar_str.push_str(&format!("X-WR-CALDESC:{}\n", self.description));
-        calendar_str.push_str(&format!("METHOD:{}\n", self.method));
-        calendar_str.push_str(&format!("VERSION:{}\n", self.version));
-        calendar_str.push_str(&format!("PRODID:{}\n", self.prodid));
-        calendar_str.push_str(&format!("CALSCALE:{}\n", self.calscale));
-        calendar_str.push_str(&format!("X-PUBLISHED-TTL:{}\n", self.published_ttl));
-        calendar_str.push_str(&format!("NAME:{}\n", self.name));
-
-        for event in &self.events {
-            calendar_str.push_str("BEGIN:VEVENT\n");
-            if let Some(start) = &event.start {
-                calendar_str.push_str(&format!("DTSTART{}\n", start.to_ical_str()));
-            }
-            if let Some(end) = &event.end {
-                calendar_str.push_str(&format!("DTEND{}\n", end.to_ical_str()));
-            }
-            calendar_str.push_str(&format!("UID:{}\n", event.uid));
-            calendar_str.push_str(&format!("DTSTAMP:{}\n", event.timestamp));
-            calendar_str.push_str(&format!("LAST-MODIFIED:{}\n", event.last_modified));
-            calendar_str.push_str(&format!("SUMMARY:{}\n", event.summary));
-            calendar_str.push_str(&format!("LOCATION:{}\n", event.location));
-            calendar_str.push_str(&format!(
-                "DESCRIPTION:{}\n",
-                event.description.replace("\n", "\\n")
-            ));
-            calendar_str.push_str("END:VEVENT\n");
-        }
-
-        calendar_str.push_str("END:VCALENDAR\n");
-        calendar_str
     }
 }

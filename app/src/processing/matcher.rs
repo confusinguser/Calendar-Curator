@@ -53,7 +53,7 @@ impl Matcher {
             MatchType::Contains => value.contains(&*self.value),
             MatchType::StartsWith => value.starts_with(&*self.value),
             MatchType::EndsWith => value.ends_with(&*self.value),
-            MatchType::Regex => regex::Regex::new(&*self.value)
+            MatchType::Regex => regex::Regex::new(&self.value)
                 .map(|re| re.is_match(value))
                 .unwrap_or(false),
             MatchType::BetweenDates => false,
@@ -68,18 +68,18 @@ impl Matcher {
                 MatchType::BetweenDates => {
                     // Value is in the format "YYYY-MM-DD,YYYY-MM-DD"
                     let dates: Vec<&str> = self.value.split(',').collect();
-                    if dates.len() == 2 {
-                        if let (Ok(start_date), Ok(end_date)) = (
+                    if dates.len() == 2
+                        && let (Ok(start_date), Ok(end_date)) = (
                             chrono::NaiveDate::parse_from_str(dates[0], "%Y-%m-%d"),
                             chrono::NaiveDate::parse_from_str(dates[1], "%Y-%m-%d"),
-                        ) {
-                            if let DateFormat::Date(d) = date {
-                                return d >= &start_date && d <= &end_date;
-                            }
-                            if let DateFormat::DateTime(dt) = date {
-                                let d = dt.naive_utc().date();
-                                return d >= start_date && d <= end_date;
-                            }
+                        )
+                    {
+                        if let DateFormat::Date(d) = date {
+                            return d >= &start_date && d <= &end_date;
+                        }
+                        if let DateFormat::DateTime(dt) = date {
+                            let d = dt.naive_utc().date();
+                            return d >= start_date && d <= end_date;
                         }
                     }
                     false
@@ -110,17 +110,17 @@ impl Matcher {
                 MatchType::TimeOfDay => {
                     // Value is in the format "HH:MM,HH:MM" for time range
                     let times: Vec<&str> = self.value.split(',').collect();
-                    if times.len() == 2 {
-                        if let (Ok(start_time), Ok(end_time)) = (
+                    if times.len() == 2
+                        && let (Ok(start_time), Ok(end_time)) = (
                             chrono::NaiveTime::parse_from_str(times[0].trim(), "%H:%M"),
                             chrono::NaiveTime::parse_from_str(times[1].trim(), "%H:%M"),
-                        ) {
-                            let event_time = match date {
-                                DateFormat::Date(_) => return false, // No time component
-                                DateFormat::DateTime(dt) => dt.naive_utc().time(),
-                            };
-                            return event_time >= start_time && event_time <= end_time;
-                        }
+                        )
+                    {
+                        let event_time = match date {
+                            DateFormat::Date(_) => return false, // No time component
+                            DateFormat::DateTime(dt) => dt.naive_utc().time(),
+                        };
+                        return event_time >= start_time && event_time <= end_time;
                     }
                     false
                 }

@@ -4,6 +4,7 @@ use chrono::{DateTime, Duration, Local, NaiveDateTime, NaiveTime, Utc};
 use rand::prelude::*;
 use uuid::Uuid;
 
+#[allow(dead_code)]
 const EVENT_TITLES: [&str; 12] = [
     "Team Meeting",
     "Project Review",
@@ -19,6 +20,7 @@ const EVENT_TITLES: [&str; 12] = [
     "Quarterly Planning",
 ];
 
+#[allow(dead_code)]
 const EVENT_LOCATIONS: [&str; 8] = [
     "Conference Room A",
     "Main Office",
@@ -30,6 +32,7 @@ const EVENT_LOCATIONS: [&str; 8] = [
     "Webinar",
 ];
 
+#[allow(dead_code)]
 const EVENT_DESCRIPTIONS: [&str; 10] = [
     "Discuss project progress and upcoming milestones",
     "Review recent code changes and discuss implementation details",
@@ -44,6 +47,7 @@ const EVENT_DESCRIPTIONS: [&str; 10] = [
 ];
 
 /// Generate random events around the current date
+#[allow(dead_code)]
 pub fn generate_example_events(count: usize) -> Vec<Event> {
     let mut rng = rand::rng();
     let today = Local::now().naive_local().date();
@@ -59,7 +63,8 @@ pub fn generate_example_events(count: usize) -> Vec<Event> {
         let hour = rng.random_range(8..=17);
         let minute = [0, 15, 30, 45][rng.random_range(0..4)]; // 15-minute increments
         let start_time = NaiveTime::from_hms_opt(hour, minute, 0).unwrap();
-        let start_datetime = DateTime::from_naive_utc_and_offset(NaiveDateTime::new(event_date, start_time), Utc);
+        let start_datetime =
+            DateTime::from_naive_utc_and_offset(NaiveDateTime::new(event_date, start_time), Utc);
 
         // Generate duration (30 mins, 1 hour, 1.5 hours, or 2 hours)
         let duration_mins = [30, 60, 90, 120][rng.random_range(0..4)];
@@ -87,3 +92,4 @@ pub fn generate_example_events(count: usize) -> Vec<Event> {
 
     events
 }
+

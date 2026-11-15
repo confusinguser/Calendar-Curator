@@ -14,6 +14,7 @@ pub struct Rule {
 }
 
 impl Rule {
+    #[allow(dead_code)]
     pub fn new(matchers: Vec<Vec<Matcher>>, actions: Vec<Action>) -> Self {
         Self {
             id: String::new(),

@@ -132,28 +132,26 @@ pub async fn get_events(
                         rule_blocked = true;
                     }
 
-                    if !rule_blocked {
-                        if let Some(transformed) = transformed_event {
-                            // Check what fields changed
-                            if original_event.summary != transformed.summary {
-                                changed_fields.push("summary".to_string());
-                            }
-                            if original_event.description != transformed.description {
-                                changed_fields.push("description".to_string());
-                            }
-                            if original_event.location != transformed.location {
-                                changed_fields.push("location".to_string());
-                            }
-                            if original_event.start != transformed.start {
-                                changed_fields.push("start".to_string());
-                            }
-                            if original_event.end != transformed.end {
-                                changed_fields.push("end".to_string());
-                            }
+                    if !rule_blocked && let Some(transformed) = transformed_event {
+                        // Check what fields changed
+                        if original_event.summary != transformed.summary {
+                            changed_fields.push("summary".to_string());
+                        }
+                        if original_event.description != transformed.description {
+                            changed_fields.push("description".to_string());
+                        }
+                        if original_event.location != transformed.location {
+                            changed_fields.push("location".to_string());
+                        }
+                        if original_event.start != transformed.start {
+                            changed_fields.push("start".to_string());
+                        }
+                        if original_event.end != transformed.end {
+                            changed_fields.push("end".to_string());
+                        }
 
-                            if !rule_blocked {
-                                current_event = transformed;
-                            }
+                        if !rule_blocked {
+                            current_event = transformed;
                         }
                     }
                 }
@@ -197,7 +195,7 @@ pub async fn get_calendar_url(
     db_lock
         .get_url_from_id(&id)
         .await
-        .map(|e| Json(e))
+        .map(Json)
         .ok_or(StatusCode::NOT_FOUND)
 }
 
@@ -588,7 +586,6 @@ pub async fn get_stats(
             .duration_since(UNIX_EPOCH + std::time::Duration::from_secs(last_accessed))
             .map_err(|err| {
                 eprintln!("Error calculating duration since last access: {}", err);
-                ()
             })
         else {
             continue;

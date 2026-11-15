@@ -58,13 +58,13 @@ impl PartialSchema for DateFormat {
 impl ToSchema for DateFormat {}
 
 pub fn parse_datetime(date_str: &str) -> Result<DateFormat, SyntaxError> {
-    if date_str.starts_with(":") {
-        NaiveDateTime::parse_from_str(&date_str[1..], "%Y%m%dT%H%M%S%Z")
+    if let Some(rest) = date_str.strip_prefix(":") {
+        NaiveDateTime::parse_from_str(rest, "%Y%m%dT%H%M%S%Z")
             .map(|dt| DateFormat::DateTime(DateTime::from_naive_utc_and_offset(dt, Utc)))
             .map_err(|e| SyntaxError::new(format!("Invalid date format: {}", e), None))
-    } else if date_str.starts_with(";VALUE=DATE:") {
-        NaiveDate::parse_from_str(&date_str[12..], "%Y%m%d")
-            .map(|dt| DateFormat::Date(dt))
+    } else if let Some(rest) = date_str.strip_prefix(";VALUE=DATE:") {
+        NaiveDate::parse_from_str(rest, "%Y%m%d")
+            .map(DateFormat::Date)
             .map_err(|e| SyntaxError::new(format!("Invalid date format: {}", e), None))
     } else {
         Err(SyntaxError::new(
