@@ -60,15 +60,22 @@ WORKDIR /app
 
 # Copy the Rust backend binary
 COPY --from=backend-builder /app/target/release/Calendar-Curator /app/calendar-curator
+RUN chgrp 0 /app/calendar-curator && chmod g+rx /app/calendar-curator
 
 # Copy the built frontend
 COPY --from=frontend-builder /app/frontend/.next/standalone ./frontend/
 COPY --from=frontend-builder /app/frontend/.next/static ./frontend/.next/static
 COPY --from=frontend-builder /app/frontend/public ./frontend/public
+RUN chgrp -R 0 ./frontend && chmod -R g+rwX ./frontend
+
 COPY ./start.sh /app/start.sh
+RUN chgrp 0 /app/start.sh && chmod g+rx /app/start.sh
 
 # Create data directory for persistent storage
-RUN mkdir -p /app/data
+RUN mkdir -p /app/data && chgrp 0 /app/data && chmod g+rwX /app/data
+
+RUN chgrp -R 0 /app \
+    && chmod -R g+rwX /app
 
 # Set environment variables
 ENV DATABASE_PATH=/app/data/calendars.json
